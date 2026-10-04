@@ -1,0 +1,6 @@
+{
+  "block.neoeco_io.super_io_port": "Super ME IO Port",
+  "item.neoeco_io.super_io_port": "Super ME IO Port",
+  "itemGroup.neoeco_io": "Neo ECO IO Port",
+  "gui.neoeco_io.speed_info": "Speed cards: %s   Budget: %s ops/tick"
+}

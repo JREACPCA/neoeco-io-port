@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PSP",
+    "SIS",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "item": "ae2:engineering_processor"
+    },
+    "S": {
+      "item": "ae2:speed_card"
+    },
+    "I": {
+      "item": "ae2:io_port"
+    }
+  },
+  "result": {
+    "id": "neoeco_io:super_io_port",
+    "count": 1
+  }
+}

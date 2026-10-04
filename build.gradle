@@ -1,0 +1,176 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    // 仅在需要额外联动模组的编译期 API 时才用到；
+    // AE2 本身来自 Maven Central，无需这些仓库。
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth Maven'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter {
+            includeGroup 'maven.modrinth'
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'CurseForge Maven'
+                url = 'https://cursemaven.com'
+            }
+        }
+        filter {
+            includeGroup 'curse.maven'
+        }
+    }
+}
+
+dependencies {
+    // ---- AE2：本模组的硬依赖，来自 Maven Central ----
+    //
+    // 重要：这里必须用**完整 jar**，不能用 `:api` 分类器。
+    // AE2 的 `-api.jar` 只含 appeng.api.* 等公开接口，不含
+    // IOPortBlockEntity / AEBaseBlock / AEBaseEntityBlock / UpgradeableMenu /
+    // MenuTypeBuilder 等实现类（已用 javap 逐个核实）。本模组继承了
+    // IOPortBlockEntity，因此必须依赖完整构件。
+    compileOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+
+    // 开发环境（runClient / runServer）需要 AE2 本体在运行时可用。
+    // 发布时不打包 AE2，玩家需自行安装。
+    runtimeOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+
+    // ---- 可选联动：Neo ECO AE Extension ----
+    // 本模组完全通过 AE2 标准存储 API（StorageCells / MEStorage / ISaveProvider）
+    // 读写存储元件，NeoECO 的存储矩阵只要按 AE2 标准注册 ICellHandler 即可被识别，
+    // 因此**无需任何编译期依赖**。
+    // 若将来需要直接调用 NeoECO 的 Java API，把 jar 放入 libs/ 并取消下面注释：
+    // compileOnly files('libs/neoecoae.jar')
+    // runtimeOnly files('libs/neoecoae.jar')
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            // 便于在开发环境里直接观察 BlockEntity 的搬运节奏
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', mod_id,
+                    '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            jvmArgument '-XX:+IgnoreUnrecognizedVMOptions'
+            jvmArgument '-XX:+AllowEnhancedClassRedefinition'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+// 把源码目录里的数据生成结果也纳入资源
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// ---- mods.toml / pack.mcmeta 的变量替换 ----
+// 模板放在 src/main/templates，生成到 build/generated/sources/modMetadata
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+// ---- 把文档从最终 jar 中排除（只随源码仓库分发）----
+tasks.named('processResources', ProcessResources) {
+    exclude 'README.md'
+    exclude 'BUILD.md'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = java_version as int
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors
+        ])
+    }
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}

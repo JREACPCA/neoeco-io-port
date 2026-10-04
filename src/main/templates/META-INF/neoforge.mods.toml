@@ -1,0 +1,44 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''
+${mod_description}
+'''
+logoFile = "neoeco_io.png"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# AE2 是硬依赖：本模组继承并扩展了 AE2 的 ME IO 端口
+[[dependencies.${mod_id}]]
+modId = "ae2"
+type = "required"
+versionRange = "[19.2.17,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Neo ECO AE Extension 为可选联动。
+# 兼容性通过 AE2 标准存储 API 实现，因此这里只声明为可选、不参与加载排序。
+[[dependencies.${mod_id}]]
+modId = "neoecoae"
+type = "optional"
+versionRange = "[1.0.0,)"
+ordering = "AFTER"
+side = "BOTH"

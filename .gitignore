@@ -1,0 +1,51 @@
+# Gradle 与构建产物
+.gradle/
+.gradle-home/
+.gradle-home-fresh/
+build/
+out/
+repo/
+
+# 构建日志与临时产物
+build-log*.txt
+stock-log.txt
+v169-log.txt
+stock-debug.log
+*.log
+
+# 开发环境运行目录（内含开发用世界与日志，不入库）
+run/
+runs/
+
+# ---------------------------------------------------------------------------
+# 工程内附带的构建工具链（仅供本机离线构建，体积很大，不入库）
+#
+#   jdk21/               Adoptium Temurin JDK 21 便携版       ~328 MB
+#   jdk21-0-2/           Oracle JDK 21.0.2（对照实验用）        ~320 MB
+#   jdk21-ms/            Microsoft OpenJDK 21（备用）
+#   gradle-8.10.2/       Gradle 8.10.2 发行版                  ~130 MB
+#
+# 这些只在「本机离线构建」时需要。推送到远端仓库（例如用 GitHub Actions
+# 构建）时应排除，让 CI 自己下载对应的 JDK 与 Gradle。
+# ---------------------------------------------------------------------------
+jdk21/
+jdk21-0-2/
+jdk21-ms/
+jdk21-alt/
+gradle-8.10.2/
+jdk21-*.zip
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# 系统
+.DS_Store
+Thumbs.db

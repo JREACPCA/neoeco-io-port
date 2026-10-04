@@ -1,0 +1,6 @@
+{
+  "block.neoeco_io.super_io_port": "超级 ME IO 端口",
+  "item.neoeco_io.super_io_port": "超级 ME IO 端口",
+  "itemGroup.neoeco_io": "Neo ECO IO 端口",
+  "gui.neoeco_io.speed_info": "加速卡：%s 张　单刻搬运额度：%s"
+}

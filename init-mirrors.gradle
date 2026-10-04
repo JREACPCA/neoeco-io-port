@@ -1,0 +1,63 @@
+// 可选：把 NeoForge 仓库重定向到国内镜像。
+//
+// 用法: ./gradlew --init-script init-mirrors.gradle build
+//
+// 背景：maven.neoforged.net 在中国大陆经常连接超时，而 ModDevGradle 必须从它
+// 下载 neoforge-<版本>-userdev.jar 与 neoform-runtime。
+// bmclapi2 镜像已验证包含绝大多数 net.neoforged 构件。
+//
+// 用法: ./gradlew --init-script init-mirrors.gradle build
+//
+// 重要提示：bmclapi2 镜像是按需缓存的，**不保证**包含
+// net.neoforged:neoform-runtime。如果你的网络能直连 maven.neoforged.net，
+// 请**不要**使用本脚本——直接用官方仓库最可靠。
+
+def NEOFORGE_MIRROR = 'https://bmclapi2.bangbang93.com/maven'
+def NEOFORGE_OFFICIAL = 'https://maven.neoforged.net/releases'
+
+// 可选：额外的本地 Maven 目录（用于离线放置构件）。
+// 设置环境变量 NEOECO_EXTRA_MAVEN 指向一个本地 Maven 仓库目录即可启用。
+def EXTRA_LOCAL_MAVEN = System.getenv('NEOECO_EXTRA_MAVEN')
+
+gradle.settingsEvaluated { settings ->
+    settings.pluginManagement.repositories {
+        maven {
+            name = 'NeoForgedMirror'
+            url = NEOFORGE_MIRROR
+        }
+    }
+}
+
+allprojects { p ->
+    p.repositories {
+        maven {
+            name = 'NeoForgedMirror'
+            url = NEOFORGE_MIRROR
+        }
+        if (EXTRA_LOCAL_MAVEN) {
+            maven {
+                name = 'ExtraLocalMaven'
+                url = EXTRA_LOCAL_MAVEN
+            }
+        }
+    }
+
+    p.afterEvaluate {
+        // ModDevGradle 的 NeoFormRuntime 会自行创建一个独立配置来解析工具链，
+        // 需要把镜像也追加进去，否则它仍会去连官方源。
+        try {
+            def nfr = p.extensions.findByName('neoForge')?.extensions?.findByName('neoFormRuntime')
+            if (nfr != null && nfr.hasProperty('additionalMavenRepositories')) {
+                nfr.additionalMavenRepositories.add(NEOFORGE_MIRROR)
+                println "[init-mirrors] 已为 neoFormRuntime 追加镜像仓库"
+            }
+        } catch (Throwable t) {
+            println "[init-mirrors] neoFormRuntime 配置跳过: ${t.message}"
+        }
+    }
+}
+
+println "[init-mirrors] 已加载：NeoForge 仓库镜像 = ${NEOFORGE_MIRROR}"
+if (EXTRA_LOCAL_MAVEN) {
+    println "[init-mirrors] 额外本地 Maven 目录 = ${EXTRA_LOCAL_MAVEN}"
+}

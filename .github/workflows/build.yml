@@ -1,0 +1,50 @@
+name: Build
+
+# 在 GitHub 的服务器上编译本模组。
+#
+# 为什么需要这个：本机环境在 NeoForm 的 recompile 阶段失败
+#    ERROR Line: 1, ..net.minecraft.world.ticks.package-info...: null
+#    Node action for recompile failed
+# 该失败与模组代码无关（最小 @Mod 工程同样失败），已在本地排除 JDK 版本、
+# NeoForm 缓存、路径、磁盘、内存、依赖、网络等因素，详见 BUILD.md 第 5 节。
+# CI 运行在干净的 Ubuntu + JDK 21 上，可以绕开本机的这个问题。
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build
+        run: gradle build --no-daemon --stacktrace
+
+      - name: Show build output
+        if: always()
+        run: ls -la build/libs/ || true
+
+      - name: Upload jar
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neoeco-io-port-jar
+          path: build/libs/*.jar
+          if-no-files-found: error

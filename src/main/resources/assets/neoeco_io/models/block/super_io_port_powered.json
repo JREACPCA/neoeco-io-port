@@ -1,0 +1,11 @@
+{
+  "parent": "neoeco_io:block/super_io_port",
+  "textures": {
+    "particle": "neoeco_io:block/super_io_port_side",
+    "front": "neoeco_io:block/super_io_port_front_powered",
+    "side": "neoeco_io:block/super_io_port_side",
+    "top": "neoeco_io:block/super_io_port_top",
+    "bottom": "neoeco_io:block/super_io_port_bottom",
+    "back": "neoeco_io:block/super_io_port_back"
+  }
+}
