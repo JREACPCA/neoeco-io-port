@@ -17,7 +17,6 @@ import appeng.api.upgrades.Upgrades;
 
 import cn.neoeco.io.registry.NeoEcoBlockEntities;
 import cn.neoeco.io.registry.NeoEcoBlocks;
-import cn.neoeco.io.registry.NeoEcoItems;
 import cn.neoeco.io.registry.NeoEcoMenus;
 
 /**
@@ -84,9 +83,9 @@ public class NeoEcoIOMod {
                 NeoEcoIOConfig.MAX_SPEED_CARDS.get());
         Upgrades.add(AEItems.REDSTONE_CARD, NeoEcoBlocks.SUPER_IO_PORT.get(), 1);
 
-        // AEBlocks 仅用于确保 AE2 方块表已初始化（避免类加载顺序问题）
-        if (AEBlocks.IO_PORT == null) {
-            throw new IllegalStateException("AE2 block definitions were not loaded");
-        }
+        // 确保 AE2 方块表已完成类初始化（避免类加载顺序问题）。
+        // 不能写成 AEBlocks.IO_PORT == null：静态 final 字段被 javac 视为
+        // 恒为非 null，部分编译器配置下会报错。这里改为主动取一次值。
+        AEBlocks.IO_PORT.get();
     }
 }

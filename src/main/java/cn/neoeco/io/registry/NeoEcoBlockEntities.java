@@ -27,7 +27,12 @@ public final class NeoEcoBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuperIOPortBlockEntity>>
             SUPER_IO_PORT = DR.register("super_io_port",
                     () -> BlockEntityType.Builder.of(
-                            SuperIOPortBlockEntity::new,
+                            // 这里必须用 lambda 而不是 SuperIOPortBlockEntity::new。
+                            // BlockEntityType.Builder.of 的工厂接口是 (BlockPos, BlockState)，
+                            // 而本区块实体的构造器是 (BlockEntityType<?>, BlockPos, BlockState)
+                            // —— 参数个数不同，无法直接用构造器引用，必须显式传入 type。
+                            (pos, state) -> new SuperIOPortBlockEntity(
+                                    NeoEcoBlockEntities.SUPER_IO_PORT.get(), pos, state),
                             NeoEcoBlocks.SUPER_IO_PORT.get()).build(null));
 
     private NeoEcoBlockEntities() {
