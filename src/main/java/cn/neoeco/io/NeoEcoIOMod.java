@@ -15,6 +15,7 @@ import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 
+import cn.neoeco.io.blockentity.SuperIOPortBlockEntity;
 import cn.neoeco.io.registry.NeoEcoRegistry;
 
 /**
@@ -84,7 +85,36 @@ public class NeoEcoIOMod {
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(this::registerUpgrades);
+        event.enqueueWork(() -> {
+            bindBlockEntity();
+            registerUpgrades();
+        });
+    }
+
+    /**
+     * 把区块实体类型装配进方块。
+     * <p>
+     * <b>这一步不能省。</b>AE2 的 {@code AEBaseEntityBlock} 把方块实体类型存在一个
+     * 内部字段里，靠 {@code setBlockEntity(...)} 注入；{@code newBlockEntity()} 直接
+     * 使用该字段。如果没调用它，放置方块时会抛：
+     * <pre>
+     * NullPointerException: Cannot invoke
+     *   "BlockEntityType.create(BlockPos, BlockState)"
+     *   because "this.blockEntityType" is null
+     *     at appeng.block.AEBaseEntityBlock.newBlockEntity
+     * </pre>
+     * AE2 自己的方块是在其注册工厂里完成的，我们这里在 common setup
+     * （两个注册表都已填充）时补上。
+     * <p>
+     * 两个 ticker 传 null：AE2 的机器由网格 TickManager 通过
+     * {@code IGridTickable} 驱动，不需要原版 BlockEntityTicker。
+     */
+    private void bindBlockEntity() {
+        NeoEcoRegistry.SUPER_IO_PORT.get().setBlockEntity(
+                SuperIOPortBlockEntity.class,
+                NeoEcoRegistry.SUPER_IO_PORT_BE.get(),
+                null,
+                null);
     }
 
     /**
