@@ -44,7 +44,7 @@ import appeng.util.inv.FilteredInternalInventory;
 import appeng.util.inv.filter.AEItemFilters;
 
 import cn.neoeco.io.NeoEcoIOConfig;
-import cn.neoeco.io.registry.NeoEcoBlocks;
+import cn.neoeco.io.registry.NeoEcoRegistry;
 
 /**
  * 超高速 ME IO 端口。
@@ -101,7 +101,7 @@ public class SuperIOPortBlockEntity extends IOPortBlockEntity {
         // 用本机方块创建升级库存 → AE2 的白名单匹配到的是我们注册的
         // 「加速卡上限 = maxSpeedCards」，而不是原版 IO 端口的 3 张。
         this.myUpgrades = UpgradeInventories.forMachine(
-                NeoEcoBlocks.SUPER_IO_PORT.get(),
+                NeoEcoRegistry.SUPER_IO_PORT.get(),
                 NeoEcoIOConfig.upgradeSlots(),
                 this::onUpgradesChanged);
 

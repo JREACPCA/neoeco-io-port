@@ -7,16 +7,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
-import appeng.api.upgrades.Upgrades;
 
-import cn.neoeco.io.registry.NeoEcoBlockEntities;
-import cn.neoeco.io.registry.NeoEcoBlocks;
-import cn.neoeco.io.registry.NeoEcoMenus;
+import cn.neoeco.io.registry.NeoEcoRegistry;
 
 /**
  * Neo ECO IO Port —— ME IO 端口的高速替代品。
@@ -36,36 +35,55 @@ public class NeoEcoIOMod {
 
     public static final String MOD_ID = "neoeco_io";
 
-    // ---- DeferredRegisters ----
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
+    /** 创造模式标签页 */
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_TAB = CREATIVE_TABS
             .register("main", () -> CreativeModeTab.builder(
-                            // 1.21.1 的 builder 需要 (Row, column) 两个参数，没有无参重载
+                            // 1.21.1 的 builder 需要 (Row, column) 两个参数，无无参重载
                             CreativeModeTab.Row.TOP, 0)
                     .title(Component.translatable("itemGroup." + MOD_ID))
-                    .icon(() -> NeoEcoBlocks.SUPER_IO_PORT_ITEM.get().getDefaultInstance())
+                    .icon(() -> NeoEcoRegistry.SUPER_IO_PORT_ITEM.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        output.accept(NeoEcoBlocks.SUPER_IO_PORT_ITEM.get());
+                        output.accept(NeoEcoRegistry.SUPER_IO_PORT_ITEM.get());
                     })
                     .build());
 
     public NeoEcoIOMod(IEventBus modEventBus, ModContainer modContainer) {
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
+        // ------------------------------------------------------------------
+        // 【关键】主动触发 NeoEcoRegistry 的类初始化。
+        //
+        // DeferredRegister 依赖静态初始化器在类加载时收集条目；而 NeoForge 规定：
+        // 某个注册表的 RegisterEvent 一旦触发，就不允许再向它的 DeferredRegister
+        // 添加条目，否则抛 IllegalStateException
+        //   "Cannot register new entries to DeferredRegister after
+        //    RegisterEvent has been fired."
+        //
+        // 如果本类只是把 DeferredRegister 注册到事件总线而不引用 NeoEcoRegistry，
+        // 那么 NeoEcoRegistry 会一直拖到「区块实体类型」注册时才被某个 lambda
+        // 间接加载 —— 那时方块注册事件早已过去，方块注册会直接崩溃。
+        //
+        // 访问一个字段即可强制其 <clinit> 立即执行，保证全部注册都发生在
+        // 任何 RegisterEvent 之前。
+        // ------------------------------------------------------------------
+        if (NeoEcoRegistry.SUPER_IO_PORT_ITEM == null) {
+            throw new IllegalStateException("registry not initialized");
+        }
+
+        NeoEcoRegistry.BLOCKS.register(modEventBus);
+        NeoEcoRegistry.ITEMS.register(modEventBus);
+        NeoEcoRegistry.BLOCK_ENTITY_TYPES.register(modEventBus);
+        NeoEcoRegistry.MENUS.register(modEventBus);
+
         CREATIVE_TABS.register(modEventBus);
-        NeoEcoBlockEntities.DR.register(modEventBus);
-        NeoEcoMenus.DR.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, NeoEcoIOConfig.SPEC);
 
         modEventBus.addListener(this::onCommonSetup);
     }
 
-    private void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+    private void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(this::registerUpgrades);
     }
 
@@ -76,15 +94,12 @@ public class NeoEcoIOMod {
      * 存储单元处理器与升级表。
      */
     private void registerUpgrades() {
-        // 允许安装 AE2 原版加速卡与红石卡。
-        // 加速卡上限同时决定 UpgradeInventory 允许插入的张数，
-        // 因此这里读取的必须与区块实体实际使用的槽位数一致。
-        // 注意：AE2 的 AEItems.XXX 是 ItemDefinition，用 asItem() 取 ItemLike。
-        Upgrades.add(AEItems.SPEED_CARD.asItem(), NeoEcoBlocks.SUPER_IO_PORT.get(),
+        // AE2 的 AEItems.XXX 是 ItemDefinition，用 asItem() 取 ItemLike。
+        Upgrades.add(AEItems.SPEED_CARD.asItem(), NeoEcoRegistry.SUPER_IO_PORT.get(),
                 NeoEcoIOConfig.MAX_SPEED_CARDS.get());
-        Upgrades.add(AEItems.REDSTONE_CARD.asItem(), NeoEcoBlocks.SUPER_IO_PORT.get(), 1);
+        Upgrades.add(AEItems.REDSTONE_CARD.asItem(), NeoEcoRegistry.SUPER_IO_PORT.get(), 1);
 
-        // 确保 AE2 方块表已完成类初始化（避免类加载顺序问题）。
+        // 确保 AE2 方块表已完成类初始化。
         // AEBlocks.IO_PORT 是 BlockDefinition，取方块要用 block()，它没有 get()。
         AEBlocks.IO_PORT.block();
     }
