@@ -31,24 +31,26 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
             NeoEcoIOMod.MOD_ID, "textures/guis/super_io_port.png");
 
-    // ---- 布局常量（必须与 tools/gen_textures.py 的 tex_gui() 保持一致）----
-    private static final int PANEL_WIDTH = 180;
-    private static final int PANEL_HEIGHT = 178;
+    // ---- 布局常量（必须与 tools/gen_textures.py 的 tex_gui() 逐一对齐）----
+    private static final int PANEL_WIDTH = 200;
+    private static final int PANEL_HEIGHT = 210;
 
     private static final int CELL_COLUMNS = 2;
-    private static final int CELL_ROWS = 3;
 
-    private static final int INPUT_X = 28;
-    private static final int OUTPUT_X = 118;
-    private static final int CELL_Y = 42;
+    private static final int INPUT_X = 30;
+    private static final int OUTPUT_X = 140;
+    private static final int CELL_Y = 52;
 
     private static final int UPGRADE_X = 27;
-    private static final int UPGRADE_Y = 18;
+    private static final int UPGRADE_Y = 22;
 
-    private static final int PLAYER_X = 8;
-    private static final int PLAYER_Y = 104;
-    private static final int HOTBAR_Y = 162;
+    private static final int PLAYER_X = 10;
+    private static final int PLAYER_Y = 130;
+    private static final int HOTBAR_Y = 188;
     private static final int PLAYER_COLUMNS = 9;
+
+    private static final int INFO_X = 8;
+    private static final int INFO_Y = 29;
 
     public SuperIOPortScreen(SuperIOPortMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -57,7 +59,7 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
         // 玩家背包标签：紧贴在背包第一行上方
         this.inventoryLabelY = PLAYER_Y - 11;
         this.titleLabelX = 8;
-        this.titleLabelY = 6;
+        this.titleLabelY = 7;
     }
 
     /**
@@ -150,6 +152,6 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
         int speedCards = this.menu.getHost().getInstalledSpeedCards();
         long budget = this.menu.getHost().getCurrentTransferBudget();
         Component info = Component.translatable("gui." + NeoEcoIOMod.MOD_ID + ".speed_info", speedCards, budget);
-        graphics.drawString(this.font, info, 8, 28, 0x404040, false);
+        graphics.drawString(this.font, info, INFO_X, INFO_Y, 0x404040, false);
     }
 }
