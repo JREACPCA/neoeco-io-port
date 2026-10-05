@@ -136,21 +136,21 @@ def tex_item():
     return img
 
 
-def tex_gui(w=200, h=210):
+def tex_gui(w=176, h=226):
     """容器界面背景。
 
-    布局必须与 SuperIOPortScreen 里的坐标常量逐一对齐
-    （那里的坐标是槽位内容区左上角，这里绘制的是 x-1..x+16 的整格）。
+    尺寸取原版 GUI 标准宽度 176，便于玩家背包/快捷栏与其它机器对齐。
 
-      y=7    标题文字起点 (8, 7)
-      y=22   升级槽 ×7             x = 27 + i*18        （到 x=27+6*18+16=151）
-      y=44   分区线
-      y=56   「速度」信息文字 (8, 32)
-      y=52   输入元件槽 2×3        x = 30 + col*18, y = 52 + row*18
-      y=52   输出元件槽 2×3        x = 140 + col*18
-      y=118  分区线
-      y=130  玩家背包 3×9          x = 10 + col*18, y = 130 + row*18
-      y=188  快捷栏 1×9            x = 10 + col*18
+    布局（坐标是槽位内容区左上角）：
+      y=6    标题文字 (8, 6)
+      y=20   速度信息文字 (8, 20)
+      y=34   升级槽 2 行 × 4 列     x = 8 + col*18, y = 34 + row*18
+      y=72   分区线
+      y=80   输入元件槽 2×3        x = 18 + col*18, y = 80 + row*18
+      y=80   输出元件槽 2×3        x = 122 + col*18
+      y=136  分区线
+      y=146  玩家背包 3×9          x = 8 + col*18, y = 146 + row*18
+      y=206  快捷栏 1×9            x = 8 + col*18
     """
     img = Image.new("RGBA", (w, h), (198, 198, 198, 255))
     d = ImageDraw.Draw(img)
@@ -178,40 +178,41 @@ def tex_gui(w=200, h=210):
         d.line([(5, y + 1), (w - 6, y + 1)], fill=(255, 255, 255, 255))
 
     # 标题下划线
-    d.line([(5, 20), (w - 6, 20)], fill=(150, 150, 150, 255))
+    d.line([(5, 17), (w - 6, 17)], fill=(150, 150, 150, 255))
 
-    # 升级卡槽：顶部一行 7 格
-    for i in range(7):
-        slot(27 + i * 18, 22)
+    # 升级卡槽：2 行 × 4 列（最多 8 格：7 加速 + 1 红石）
+    for row in range(2):
+        for col in range(4):
+            slot(8 + col * 18, 34 + row * 18)
 
     # 分区：升级区 / 搬运区
-    divider(44)
+    divider(72)
 
     # 输入元件槽 2 列 × 3 行
     for row in range(3):
         for col in range(2):
-            slot(30 + col * 18, 52 + row * 18)
+            slot(18 + col * 18, 80 + row * 18)
 
     # 输出元件槽 2 列 × 3 行
     for row in range(3):
         for col in range(2):
-            slot(140 + col * 18, 52 + row * 18)
+            slot(122 + col * 18, 80 + row * 18)
 
     # 中间箭头指示（输入 → 输出）
-    d.polygon([(94, 60), (112, 70), (94, 80)], fill=(120, 120, 120, 255))
-    d.polygon([(98, 63), (109, 70), (98, 77)], fill=(90, 90, 90, 255))
+    d.polygon([(66, 88), (84, 98), (66, 108)], fill=(120, 120, 120, 255))
+    d.polygon([(70, 91), (81, 98), (70, 105)], fill=(90, 90, 90, 255))
 
     # 分区：机器区 / 玩家背包
-    divider(118)
+    divider(136)
 
     # 玩家背包 3 行 × 9 列
     for row in range(3):
         for col in range(9):
-            slot(10 + col * 18, 130 + row * 18)
+            slot(8 + col * 18, 146 + row * 18)
 
     # 快捷栏 1 行 × 9 列
     for col in range(9):
-        slot(10 + col * 18, 188)
+        slot(8 + col * 18, 206)
 
     return img
 

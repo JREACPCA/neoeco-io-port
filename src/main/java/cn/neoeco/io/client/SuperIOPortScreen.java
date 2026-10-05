@@ -32,25 +32,29 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
             NeoEcoIOMod.MOD_ID, "textures/guis/super_io_port.png");
 
     // ---- 布局常量（必须与 tools/gen_textures.py 的 tex_gui() 逐一对齐）----
-    private static final int PANEL_WIDTH = 200;
-    private static final int PANEL_HEIGHT = 210;
+    //
+    // 面板宽度取原版 GUI 标准的 176，便于玩家背包/快捷栏与其它机器视觉一致。
+    // 升级槽做成 2 行 × 4 列（与背包同宽），避免单行 7 格挤爆面板。
+    private static final int PANEL_WIDTH = 176;
+    private static final int PANEL_HEIGHT = 226;
 
     private static final int CELL_COLUMNS = 2;
 
-    private static final int INPUT_X = 30;
-    private static final int OUTPUT_X = 140;
-    private static final int CELL_Y = 52;
+    private static final int INPUT_X = 18;
+    private static final int OUTPUT_X = 122;
+    private static final int CELL_Y = 80;
 
-    private static final int UPGRADE_X = 27;
-    private static final int UPGRADE_Y = 22;
+    private static final int UPGRADE_X = 8;
+    private static final int UPGRADE_Y = 34;
+    private static final int UPGRADE_COLUMNS = 4;
 
-    private static final int PLAYER_X = 10;
-    private static final int PLAYER_Y = 130;
-    private static final int HOTBAR_Y = 188;
+    private static final int PLAYER_X = 8;
+    private static final int PLAYER_Y = 146;
+    private static final int HOTBAR_Y = 206;
     private static final int PLAYER_COLUMNS = 9;
 
     private static final int INFO_X = 8;
-    private static final int INFO_Y = 29;
+    private static final int INFO_Y = 20;
 
     public SuperIOPortScreen(SuperIOPortMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -59,7 +63,7 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
         // 玩家背包标签：紧贴在背包第一行上方
         this.inventoryLabelY = PLAYER_Y - 11;
         this.titleLabelX = 8;
-        this.titleLabelY = 7;
+        this.titleLabelY = 6;
     }
 
     /**
@@ -91,7 +95,9 @@ public class SuperIOPortScreen extends AbstractContainerScreen<SuperIOPortMenu> 
                         CELL_Y + (output / CELL_COLUMNS) * 18);
                 output++;
             } else if (semantic == appeng.menu.SlotSemantics.UPGRADE) {
-                setSlotPos(slot, UPGRADE_X + upgrade * 18, UPGRADE_Y);
+                setSlotPos(slot,
+                        UPGRADE_X + (upgrade % UPGRADE_COLUMNS) * 18,
+                        UPGRADE_Y + (upgrade / UPGRADE_COLUMNS) * 18);
                 upgrade++;
             } else if (semantic == appeng.menu.SlotSemantics.PLAYER_INVENTORY) {
                 setSlotPos(slot, PLAYER_X + (player % PLAYER_COLUMNS) * 18,
