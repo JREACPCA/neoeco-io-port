@@ -136,8 +136,19 @@ def tex_item():
     return img
 
 
-def tex_gui(w=176, h=168):
-    """容器界面背景。"""
+def tex_gui(w=180, h=178):
+    """容器界面背景。
+
+    布局必须与 SuperIOPortScreen.init() 里的槽位坐标逐一对齐
+    （那里的坐标是内容区左上角，这里绘制的是 x-1..x+16 的整格）。
+
+      y=18   升级槽 ×7             x = 27 + i*18
+      y=42   输入元件槽 2×3        x = 28 + col*18, y = 42 + row*18
+      y=42   输出元件槽 2×3        x = 118 + col*18
+      y=28   速度信息文字（左侧）
+      y=104  玩家背包 3×9          x = 8 + col*18, y = 104 + row*18
+      y=162  快捷栏 1×9
+    """
     img = Image.new("RGBA", (w, h), (198, 198, 198, 255))
     d = ImageDraw.Draw(img)
 
@@ -158,32 +169,33 @@ def tex_gui(w=176, h=168):
         d.line([(cx - 1, cy + 16), (cx + 16, cy + 16)], fill=(255, 255, 255, 255))
         d.line([(cx + 16, cy - 1), (cx + 16, cy + 16)], fill=(255, 255, 255, 255))
 
-    # 输入元件槽 2 列 × 3 行，起点 (19, 17)，列距 18、行距 18
-    for row in range(3):
-        for col in range(2):
-            slot(19 + col * 18, 17 + row * 18)
-
-    # 输出元件槽
-    for row in range(3):
-        for col in range(2):
-            slot(122 + col * 18, 17 + row * 18)
-
-    # 升级卡槽：顶部一行 7 格（base 61）
+    # 升级卡槽：顶部一行 7 格
     for i in range(7):
-        slot(61 + i * 18, 2)
+        slot(27 + i * 18, 18)
 
-    # 玩家背包 3 行 × 9 列，起点 (8, 84)
+    # 输入元件槽 2 列 × 3 行
+    for row in range(3):
+        for col in range(2):
+            slot(28 + col * 18, 42 + row * 18)
+
+    # 输出元件槽 2 列 × 3 行
+    for row in range(3):
+        for col in range(2):
+            slot(118 + col * 18, 42 + row * 18)
+
+    # 中间箭头指示（输入 → 输出）
+    d.polygon([(76, 48), (92, 56), (76, 64)], fill=(120, 120, 120, 255))
+    d.polygon([(80, 50), (90, 56), (80, 62)], fill=(90, 90, 90, 255))
+
+    # 玩家背包 3 行 × 9 列
     for row in range(3):
         for col in range(9):
-            slot(8 + col * 18, 84 + row * 18)
+            slot(8 + col * 18, 104 + row * 18)
 
     # 快捷栏 1 行 × 9 列
     for col in range(9):
-        slot(8 + col * 18, 142)
+        slot(8 + col * 18, 162)
 
-    # 中间箭头指示（输入 → 输出）
-    d.polygon([(70, 30), (86, 38), (70, 46)], fill=(120, 120, 120, 255))
-    d.polygon([(74, 32), (84, 38), (74, 44)], fill=(90, 90, 90, 255))
     return img
 
 
