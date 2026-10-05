@@ -86,28 +86,44 @@ public final class NeoEcoRegistry {
     // ------------------------------------------------------------------
     // 区块实体类型
     //
-    // 这里刻意用一个嵌套的 holder 类，并在**静态初始化块**里回填。
+    // 这里需要一个「先创建、后面才赋值」的持有对象，原因有两层：
     //
-    // 原因：工厂 lambda 需要拿到 BlockEntityType 自身，但 Java 规定
-    // 字段初始化式里不能引用正在初始化的字段（无论怎么嵌套都会报
-    // "self-reference in initializer"）。改为：
-    //   1. 先在静态块里用 lambda 创建 holder（此时还不读取它）
-    //   2. 再把结果赋给字段（赋值语句的右侧不算"在初始化式中引用自己"）
-    // 这样在语法上完全合法，运行时语义也一致。
+    // 1) 工厂 lambda 必须拿到 BlockEntityType 自身才能构造区块实体，
+    //    若直接写在字段初始化式里引用自己，javac 报
+    //       "self-reference in initializer"。
+    //
+    // 2) 改用静态初始化块回填后，javac 又会报
+    //       "variable SUPER_IO_PORT_BE might not have been initialized"
+    //    —— Java 的「确定赋值」规则要求：静态块里要读取某个字段之前，
+    //    必须在该块内已经明确赋值过它。lambda 体虽然后执行，也不被认可。
+    //
+    // 解决办法：lambda 不去读那个 final 字段，而是读一个小持有对象。
+    // 持有对象在静态块开头就完成赋值（满足确定赋值），其内部字段在
+    // 静态块末尾回填（lambda 真正执行时早已填好）。
     // ------------------------------------------------------------------
+
+    private static final class BeHolder {
+        DeferredHolder<BlockEntityType<?>, BlockEntityType<SuperIOPortBlockEntity>> ref;
+    }
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SuperIOPortBlockEntity>>
             SUPER_IO_PORT_BE;
 
     static {
+        // 先在静态块内明确赋值持有对象本身 → 满足确定赋值规则
+        BeHolder holder = new BeHolder();
+
         SUPER_IO_PORT_BE = BLOCK_ENTITY_TYPES.register("super_io_port",
                 () -> BlockEntityType.Builder.of(
                         // 必须用 lambda 显式传入 type：本区块实体的构造器是
                         // (BlockEntityType<?>, BlockPos, BlockState)，
                         // 而工厂接口只要 (BlockPos, BlockState)，参数个数不同。
                         (pos, state) -> new SuperIOPortBlockEntity(
-                                SUPER_IO_PORT_BE.get(), pos, state),
+                                holder.ref.get(), pos, state),
                         SUPER_IO_PORT.get()).build(null));
+
+        // 回填，供上面那个 lambda 在真正执行时使用
+        holder.ref = SUPER_IO_PORT_BE;
     }
 
     // ------------------------------------------------------------------
