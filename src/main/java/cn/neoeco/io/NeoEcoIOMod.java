@@ -3,7 +3,6 @@ package cn.neoeco.io;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -44,9 +43,10 @@ public class NeoEcoIOMod {
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_TAB = CREATIVE_TABS
-            .register("main", () -> CreativeModeTab.builder()
+            .register("main", () -> CreativeModeTab.builder(
+                            // 1.21.1 的 builder 需要 (Row, column) 两个参数，没有无参重载
+                            CreativeModeTab.Row.TOP, 0)
                     .title(Component.translatable("itemGroup." + MOD_ID))
-                    .withTabsBefore(CreativeModeTabs.SEARCH)
                     .icon(() -> NeoEcoBlocks.SUPER_IO_PORT_ITEM.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(NeoEcoBlocks.SUPER_IO_PORT_ITEM.get());
@@ -79,13 +79,13 @@ public class NeoEcoIOMod {
         // 允许安装 AE2 原版加速卡与红石卡。
         // 加速卡上限同时决定 UpgradeInventory 允许插入的张数，
         // 因此这里读取的必须与区块实体实际使用的槽位数一致。
-        Upgrades.add(AEItems.SPEED_CARD, NeoEcoBlocks.SUPER_IO_PORT.get(),
+        // 注意：AE2 的 AEItems.XXX 是 ItemDefinition，用 asItem() 取 ItemLike。
+        Upgrades.add(AEItems.SPEED_CARD.asItem(), NeoEcoBlocks.SUPER_IO_PORT.get(),
                 NeoEcoIOConfig.MAX_SPEED_CARDS.get());
-        Upgrades.add(AEItems.REDSTONE_CARD, NeoEcoBlocks.SUPER_IO_PORT.get(), 1);
+        Upgrades.add(AEItems.REDSTONE_CARD.asItem(), NeoEcoBlocks.SUPER_IO_PORT.get(), 1);
 
         // 确保 AE2 方块表已完成类初始化（避免类加载顺序问题）。
-        // 不能写成 AEBlocks.IO_PORT == null：静态 final 字段被 javac 视为
-        // 恒为非 null，部分编译器配置下会报错。这里改为主动取一次值。
-        AEBlocks.IO_PORT.get();
+        // AEBlocks.IO_PORT 是 BlockDefinition，取方块要用 block()，它没有 get()。
+        AEBlocks.IO_PORT.block();
     }
 }
